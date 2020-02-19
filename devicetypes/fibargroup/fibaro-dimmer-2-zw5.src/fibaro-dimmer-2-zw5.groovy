@@ -2,7 +2,7 @@
  *	Fibaro Dimmer 2
  */
 metadata {
-	definition (name: "Fibaro Dimmer 2 ZW5", namespace: "FibarGroup", author: "Fibar Group", runLocally: true, minHubCoreVersion: '000.025.0000', executeCommandsLocally: true, mnmn: "SmartThings", vid:"generic-dimmer-power-energy") {
+	definition (name: "Fibaro Dimmer 2 ZW5 - EP1", namespace: "FibarGroup", author: "Fibar Group", runLocally: true, minHubCoreVersion: '000.025.0000', executeCommandsLocally: true, mnmn: "SmartThings", vid:"generic-dimmer-power-energy") {
 		capability "Switch"
 		capability "Switch Level"
 		capability "Energy Meter"
@@ -366,6 +366,18 @@ def zwaveEvent(physicalgraph.zwave.commands.securityv1.SecurityMessageEncapsulat
 	} else {
 		log.warn "Unable to extract Secure command from $cmd"
 	}
+}
+
+def zwaveEvent(physicalgraph.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
+    def encapsulatedCommand = cmd.encapsulatedCommand(cmdVersions())
+    if (encapsulatedCommand) {
+        logging("${device.displayName} - Parsed MultiChannelCmdEncap ${encapsulatedCommand}")
+        // this device sometimes sends events encapsulated. Both from sourceEndpoint 0 and 1
+        if (cmd.sourceEndPoint as Integer == 0 || cmd.sourceEndPoint as Integer == 1) zwaveEvent(encapsulatedCommand)
+        else log.warn "Received a multichannel event from an unsupported channel"
+    } else {
+        log.warn "Unable to extract MultiChannel command from $cmd"
+    }
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.crc16encapv1.Crc16Encap cmd) {
