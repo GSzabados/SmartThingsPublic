@@ -17,13 +17,15 @@ ESP8266HTTPUpdateServer httpUpdater;
 //#define SONOFF_4CH //ESP8285 !!!!!!!!!!
 //#define ECOPLUG
 //#define SONOFF_IFAN02 //ESP8285 !!!!!!!!!!
-#define SHELLY
+//#define SHELLY
+#define SONOFF_MINI
+
 
 #ifdef SONOFF_POW
 #include "HLW8012.h"
 #endif
 
-#if defined SONOFF_TH || defined SONOFF
+#if defined SONOFF_TH || defined SONOFF || defined SONOFF_MINI 
 #include <DHT.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -102,6 +104,10 @@ String softwareVersion = "2.0.5";
 const char * projectName = "Shelly";
 String softwareVersion = "2.0.5";
 #endif
+#if defined SONOFF_MINI
+const char * projectName = "Sonoff Mini";
+String softwareVersion = "2.0.5";
+#endif
 
 const char compile_date[] = __DATE__ " " __TIME__;
 
@@ -130,7 +136,7 @@ unsigned long autoOffTimer3 = 0;
 unsigned long autoOffTimer4 = 0;
 unsigned long currentmillis = 0;
 
-#if defined SONOFF_TH || defined SONOFF  || defined SHELLY
+#if defined SONOFF_TH || defined SONOFF  || defined SHELLY || defined SONOFF_MINI
 unsigned long timerT = 0;
 unsigned long timerH = 0;
 #endif
@@ -216,6 +222,15 @@ void calibrate(int voltage = 120) {
 #define LED_PIN1       14
 #endif
 
+#if defined SONOFF_MINI
+#define REL_PIN1       12
+#define LED_PIN1       13
+#define KEY_PIN1       0
+#define EXT_PIN        4
+
+#endif
+
+
 #if defined SONOFF_4CH || defined SONOFF_IFAN02
 #define REL_PIN1       12
 #define KEY_PIN1       0
@@ -264,7 +279,29 @@ void dsSetup() {
 }
 #endif
 
-#if defined SONOFF || defined SONOFF_S20 || defined SONOFF_TOUCH || defined SONOFF_TH || defined ECOPLUG || defined SONOFF_DUAL || defined SONOFF_4CH || defined SONOFF_IFAN02 || defined SHELLY
+#if defined SONOFF_MINI
+#define EXT_PIN        4
+#define DS_PIN         4
+#define DHTTYPE DHT22
+DHT dht(EXT_PIN, DHTTYPE);
+float temperature;
+float humidity;
+
+OneWire oneWire(DS_PIN);
+DallasTemperature ds18b20(&oneWire);
+
+double _dsTemperature = 0;
+
+double getDSTemperature() {
+  return _dsTemperature;
+}
+
+void dsSetup() {
+  ds18b20.begin();
+}
+#endif
+
+#if defined SONOFF || defined SONOFF_S20 || defined SONOFF_TOUCH || defined SONOFF_TH || defined ECOPLUG || defined SONOFF_DUAL || defined SONOFF_4CH || defined SONOFF_IFAN02 || defined SHELLY || defined SONOFF_MINI
 
 
 #define LEDoff1 digitalWrite(LED_PIN1,HIGH)
@@ -492,7 +529,7 @@ struct SettingsStruct
   boolean       reallyLongPress;
   boolean       usePassword;
   boolean       usePasswordControl;
-#if defined SONOFF || defined SONOFF_TOUCH || defined SONOFF_S20 || defined ECOPLUG || defined SHELLY
+#if defined SONOFF || defined SONOFF_TOUCH || defined SONOFF_S20 || defined ECOPLUG || defined SHELLY || defined SONOFF_MINI
   int           usePort;
   int           switchType;
   int           autoOff1;
@@ -973,7 +1010,7 @@ void relayToggle4() {
 }
 #endif
 
-#if defined SONOFF || defined SONOFF_TH || defined SHELLY
+#if defined SONOFF || defined SONOFF_TH || defined SHELLY || defined SONOFF_MINI
 void extRelayToggle() {
   if (Settings.externalType > 0) {
     int reading = digitalRead(EXT_PIN);
@@ -1617,7 +1654,7 @@ void setup()
   hlw8012.setResistors(CURRENT_RESISTOR, VOLTAGE_RESISTOR_UPSTREAM, VOLTAGE_RESISTOR_DOWNSTREAM);
   setInterrupts();
 #endif
-#if defined SONOFF_TH || defined SONOFF
+#if defined SONOFF_TH || defined SONOFF || defined SONOFF_MINI 
   
   if (Settings.externalType == 3 || Settings.externalType == 4) {
     pinMode(EXT_PIN, INPUT_PULLUP);
@@ -1956,7 +1993,7 @@ void setup()
     String uReport = server->arg("ureport");
     String debounce = server->arg("debounce");
     String hostname = server->arg("hostname");
-    #if defined SONOFF || defined SONOFF_TH || defined SHELLY
+    #if defined SONOFF || defined SONOFF_TH || defined SHELLY || defined SONOFF_MINI
     String switchType = server->arg("switchtype");
     String externalType = server->arg("externaltype");
     #endif
@@ -2054,7 +2091,7 @@ void setup()
       if (hostname != Settings.hostName) needReboot = true;
       WiFi.hostname(hostname.c_str());
       strncpy(Settings.hostName, hostname.c_str(), sizeof(Settings.hostName));
-  #if defined SONOFF || defined SONOFF_TH || defined SHELLY
+  #if defined SONOFF || defined SONOFF_TH || defined SHELLY || defined SONOFF_MINI
       if (externalType.length() != 0)
       {
         if(externalType.toInt() != Settings.externalType) needReboot = true;
@@ -2308,7 +2345,7 @@ void setup()
     reply += F("<TR><TD>Switch Debounce:<TD><input type='text' name='debounce' value='");
     reply += Settings.debounce;
     reply += F("'>");
-    #if defined SONOFF || defined SONOFF_TH || defined SHELLY
+    #if defined SONOFF || defined SONOFF_TH || defined SHELLY || defined SONOFF_MINI
     choice = Settings.externalType;
     reply += F("<TR><TD>External Device Type:<TD><select name='");
     reply += "externaltype";
@@ -2744,7 +2781,7 @@ void setup()
     if (configName == "ureport") {
       reply += "{\"name\":\"ureport\", \"value\":\"" + String(Settings.uReport) + "\", \"success\":\"true\", \"type\":\"configuration\"}";
     }
-    #if defined SONOFF || defined SONOFF_TH || defined SHELLY
+    #if defined SONOFF || defined SONOFF_TH || defined SHELLY || defined SONOFF_MINI
     if (configName == "externaltype") {
       reply += "{\"name\":\"externaltype\", \"value\":\"" + String(Settings.externalType) + "\", \"success\":\"true\", \"type\":\"configuration\"}";
     }
@@ -2862,7 +2899,7 @@ void setup()
       }
       reply += "{\"name\":\"debounce\", \"value\":\"" + String(Settings.debounce) + "\", \"success\":\"true\", \"type\":\"configuration\"}";
     }
-    #if defined SONOFF || defined SONOFF_TH || defined SHELLY
+    #if defined SONOFF || defined SONOFF_TH || defined SHELLY || defined SONOFF_MINI
     if (configName == "externaltype") {
       if (configValue.length() != 0)
       {
