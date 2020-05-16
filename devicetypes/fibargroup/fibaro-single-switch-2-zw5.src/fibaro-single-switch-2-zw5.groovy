@@ -3,7 +3,7 @@
  *
  */
 metadata {
-    definition (name: "Fibaro Single Switch 2 ZW5", namespace: "FibarGroup", author: "Fibar Group", mnmn: "SmartThings", vid:"generic-switch-power-energy") {
+    definition (name: "Fibaro Single Switch 2 ZW5 - EP 1", namespace: "FibarGroup", author: "Fibar Group", mnmn: "SmartThings", vid:"generic-switch-power-energy") {
         capability "Switch"
         capability "Energy Meter"
         capability "Power Meter"
