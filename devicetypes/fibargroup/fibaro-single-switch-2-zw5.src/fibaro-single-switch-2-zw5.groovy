@@ -314,7 +314,7 @@ def zwaveEvent(physicalgraph.zwave.commands.multichannelv3.MultiChannelCmdEncap 
     if (encapsulatedCommand) {
         logging("${device.displayName} - Parsed MultiChannelCmdEncap ${encapsulatedCommand}")
         // this device sometimes sends events encapsulated.
-        if (cmd.sourceEndPoint as Integer == 0) zwaveEvent(encapsulatedCommand)
+        if (cmd.sourceEndPoint as Integer == 0 || cmd.sourceEndPoint as Integer == 1) zwaveEvent(encapsulatedCommand)
         else log.warn "Received a multichannel event from an unsupported channel"
     } else {
         log.warn "Unable to extract MultiChannel command from $cmd"
